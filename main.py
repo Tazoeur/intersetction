@@ -2,15 +2,15 @@
 Find the intersection of multiple sets
 
 Usage:
-    interset [--input=<input>|-i=<input>] [--method=<method>|-m=<method>] [--output=<output>|-o=<output>]
-        [--verbosity|-v|-vv|-vvv] [--log-file=<log_path>]
     interset generate (--output=<output>|-o=<output>) [--sets=<s>|-s=<s>] [--elements=<e>|-e=<e>] [--common=<c>|-c=<c>]
         [--verbosity|-v|-vv|-vvv] [--log-file=<log_file>]
     interset benchmark [--setup] [--verbosity|-v|-vv|-vvv] [--log-file=<log_file>]
+    interset list (methods|datasets) [--verbosity|-v|-vv|-vvv] [--log-file=<log_file>]
 
 Arguments:
-    generate    generate the benchmark data (in data folder)
-    benchmark   launch the different methods and display results
+    generate    generate the benchmark data (in data folder).
+    benchmark   launch the different methods and display results.
+    list        list the available methods or datasets.
 
 Options:
     --input=<input> -i=<input>      The file containing the array of sets.
@@ -18,8 +18,6 @@ Options:
                                     [default: data/input.txt]
     --output=<output> -o=<output>   The file where the resulting set should be stored.
                                     [default: data/output.txt]
-    --method=<method> -m=<method>   The method that this script should use to get the intersection
-                                    [default: best]
     --sets=<s> -s=<s>               The number of sets. [default: 10]
     --elements=<e> -e=<e>           The number of elements in each set. [default: 100]
     --common=<c> -c=<c>             The number of common elements in each set.
@@ -31,13 +29,14 @@ Options:
     --help -h                       Display this screen.
 """
 import logging
+import os
 
 from docopt import docopt
 
-from src.benchmark import generate_testing_data
+from src.benchmark import generate_testing_data, data, get_data_file_name, measure_solving_time, display_results
 from src.generator.sets import generate
-from src.solver.intersection import set_intersection
-from src.utils.file import write_sets, load_sets
+from src.solver.intersection import methods
+from src.utils.file import write_sets
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='InterSETction 0.1')
@@ -76,13 +75,21 @@ if __name__ == '__main__':
 
         # Launch the actual benchmark
         else:
-            print('not implemented')
+            results = measure_solving_time(
+                [(f'{s}sets%{e}elements%{c}commons', os.path.abspath(get_data_file_name(s, e, c))) for s, e, c in data],
+                methods())
+            display_results(results)
 
-    #
-    else:
-        method = arguments['--method']
-        logging.debug(f'Solving with {method}.')
-        sets = load_sets(arguments['--input'])
-        m = set_intersection
-        a = m(sets)
-        print(a)
+    # List
+    elif arguments['list']:
+        if arguments['methods']:
+            print('The following methods are implemented for benchmark testing :')
+            for m, _f in methods():
+                print(f'\t- {m}')
+        elif arguments['datasets']:
+            print('The following datasets are available for benchmark testing :')
+            for file in os.listdir('data'):
+                if not file.endswith('.txt'):
+                    continue
+                else:
+                    print(f'\t- {file}')

@@ -1,5 +1,13 @@
 from functools import reduce
-from typing import Set, List
+from typing import Set, List, Callable
+
+
+def methods() -> [(str, Callable)]:
+    return [
+        ('Set Intersection', set_intersection),
+        ('Set Intersection Reduce', set_intersection_reduce),
+        ('Binary Reduce', binary_reduce)
+    ]
 
 
 def set_intersection(sets: List[Set[int]]) -> Set[int]:
